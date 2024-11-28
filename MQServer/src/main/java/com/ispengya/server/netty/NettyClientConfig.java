@@ -14,7 +14,7 @@ public class NettyClientConfig {
     private int clientCallbackExecutorThreads = Runtime.getRuntime().availableProcessors();
     private int clientOnewaySemaphoreValue = 65535;
     private int clientAsyncSemaphoreValue = 65535;
-    private int connectTimeoutMillis = 3000;
+    private int connectTimeoutMillis = 30000;
     private long channelNotActiveInterval = 1000 * 60;
 
     /**

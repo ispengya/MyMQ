@@ -4,6 +4,7 @@ import com.ispengya.server.ChannelEventListener;
 import com.ispengya.server.common.util.RemotingHelper;
 import com.ispengya.server.procotol.NettyDecoder;
 import com.ispengya.server.procotol.NettyEncoder;
+import com.ispengya.server.procotol.RemotingCommand;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -14,6 +15,7 @@ import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,6 +48,11 @@ public class NettyRemotingClient {
     private final ChannelEventListener channelEventListener;
     private final NettyClientEventExecutor nettyEventExecutor = new NettyClientEventExecutor();
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
+    /**
+     * This map caches all on-going requests.
+     */
+    protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
+            new ConcurrentHashMap<Integer, ResponseFuture>(256);
 
     public NettyRemotingClient(final NettyClientConfig nettyClientConfig) {
         this(nettyClientConfig, null);
@@ -87,7 +94,6 @@ public class NettyRemotingClient {
         Random r = new Random();
         return Math.abs(r.nextInt() % 999) % 999;
     }
-
     public void start() {
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
             nettyClientConfig.getClientWorkerThreads(),
@@ -124,7 +130,6 @@ public class NettyRemotingClient {
             this.nettyEventExecutor.start();
         }
     }
-
     public void shutdown() {
         try {
 
@@ -155,7 +160,6 @@ public class NettyRemotingClient {
             }
         }
     }
-
     public void closeChannel(final String addr, final Channel channel) {
         if (null == channel)
             return;
@@ -197,8 +201,6 @@ public class NettyRemotingClient {
             log.error("closeChannel exception", e);
         }
     }
-
-
     public void closeChannel(final Channel channel) {
         if (null == channel)
             return;
@@ -241,6 +243,188 @@ public class NettyRemotingClient {
             }
         } catch (InterruptedException e) {
             log.error("closeChannel exception", e);
+        }
+    }
+    private Channel getAndCreateChannel(final String addr) throws InterruptedException {
+        if (null == addr) {
+            return getAndCreateNameserverChannel();
+        }
+
+        ChannelWrapper cw = this.channelTables.get(addr);
+        if (cw != null && cw.isOK()) {
+            return cw.getChannel();
+        }
+
+        return this.createChannel(addr);
+    }
+    private Channel getAndCreateNameserverChannel() throws InterruptedException {
+        String addr = this.namesrvAddrChoosed.get();
+        if (addr != null) {
+            ChannelWrapper cw = this.channelTables.get(addr);
+            if (cw != null && cw.isOK()) {
+                return cw.getChannel();
+            }
+        }
+
+        final List<String> addrList = this.namesrvAddrList.get();
+        if (this.lockNamesrvChannel.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            try {
+                addr = this.namesrvAddrChoosed.get();
+                if (addr != null) {
+                    ChannelWrapper cw = this.channelTables.get(addr);
+                    if (cw != null && cw.isOK()) {
+                        return cw.getChannel();
+                    }
+                }
+
+                if (addrList != null && !addrList.isEmpty()) {
+                    for (int i = 0; i < addrList.size(); i++) {
+                        int index = this.namesrvIndex.incrementAndGet();
+                        index = Math.abs(index);
+                        index = index % addrList.size();
+                        String newAddr = addrList.get(index);
+
+                        this.namesrvAddrChoosed.set(newAddr);
+                        log.info("new name server is chosen. OLD: {} , NEW: {}. namesrvIndex = {}", addr, newAddr, namesrvIndex);
+                        Channel channelNew = this.createChannel(newAddr);
+                        if (channelNew != null) {
+                            return channelNew;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("getAndCreateNameserverChannel: create name server channel exception", e);
+            } finally {
+                this.lockNamesrvChannel.unlock();
+            }
+        } else {
+            log.warn("getAndCreateNameserverChannel: try to lock name server, but timeout, {}ms", LOCK_TIMEOUT_MILLIS);
+        }
+
+        return null;
+    }
+    private Channel createChannel(final String addr) throws InterruptedException {
+        ChannelWrapper cw = this.channelTables.get(addr);
+        if (cw != null && cw.isOK()) {
+            cw.getChannel().close();
+            channelTables.remove(addr);
+        }
+
+        if (this.lockChannelTables.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            try {
+                boolean createNewConnection;
+                cw = this.channelTables.get(addr);
+                if (cw != null) {
+
+                    if (cw.isOK()) {
+                        cw.getChannel().close();
+                        this.channelTables.remove(addr);
+                        createNewConnection = true;
+                    } else if (!cw.getChannelFuture().isDone()) {
+                        createNewConnection = false;
+                    } else {
+                        this.channelTables.remove(addr);
+                        createNewConnection = true;
+                    }
+                } else {
+                    createNewConnection = true;
+                }
+
+                if (createNewConnection) {
+                    ChannelFuture channelFuture = this.bootstrap.connect(RemotingHelper.string2SocketAddress(addr));
+                    log.info("createChannel: begin to connect remote host[{}] asynchronously", addr);
+                    cw = new ChannelWrapper(channelFuture);
+                    this.channelTables.put(addr, cw);
+                }
+            } catch (Exception e) {
+                log.error("createChannel: create channel exception", e);
+            } finally {
+                this.lockChannelTables.unlock();
+            }
+        } else {
+            log.warn("createChannel: try to lock channel table, but timeout, {}ms", LOCK_TIMEOUT_MILLIS);
+        }
+
+        if (cw != null) {
+            ChannelFuture channelFuture = cw.getChannelFuture();
+            if (channelFuture.awaitUninterruptibly(this.nettyClientConfig.getConnectTimeoutMillis())) {
+                if (cw.isOK()) {
+                    log.info("createChannel: connect remote host[{}] success, {}", addr, channelFuture.toString());
+                    return cw.getChannel();
+                } else {
+                    log.warn("createChannel: connect remote host[" + addr + "] failed, " + channelFuture.toString(), channelFuture.cause());
+                }
+            } else {
+                log.warn("createChannel: connect remote host[{}] timeout {}ms, {}", addr, this.nettyClientConfig.getConnectTimeoutMillis(),
+                        channelFuture.toString());
+            }
+        }
+
+        return null;
+    }
+
+    public RemotingCommand invokeSync(String addr, final RemotingCommand request, long timeoutMillis)
+            throws Exception {
+        long beginStartTime = System.currentTimeMillis();
+        //这里启动nettyclient
+        final Channel channel = this.getAndCreateChannel(addr);
+        if (channel != null && channel.isActive()) {
+            try {
+                long costTime = System.currentTimeMillis() - beginStartTime;
+                if (timeoutMillis < costTime) {
+                    throw new Exception("invokeSync call timeout");
+                }
+                RemotingCommand response = this.invokeSyncImpl(channel, request, timeoutMillis - costTime);
+                return response;
+            } catch (Exception e) {
+                log.warn("invokeSync: send request exception, so close the channel[{}]", addr);
+                this.closeChannel(addr, channel);
+                throw e;
+            }
+        } else {
+            this.closeChannel(addr, channel);
+            throw new RuntimeException(addr);
+        }
+    }
+
+    public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request,
+                                          final long timeoutMillis)
+            throws Exception {
+        final int opaque = request.getOpaque();
+
+        try {
+            final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis, null, null);
+            this.responseTable.put(opaque, responseFuture);
+            final SocketAddress addr = channel.remoteAddress();
+            channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture f) throws Exception {
+                    if (f.isSuccess()) {
+                        responseFuture.setSendRequestOK(true);
+                        return;
+                    } else {
+                        responseFuture.setSendRequestOK(false);
+                    }
+
+                    responseTable.remove(opaque);
+                    responseFuture.setCause(f.cause());
+                    responseFuture.putResponse(null);
+                    log.warn("send a request command to channel <" + addr + "> failed.");
+                }
+            });
+
+            RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
+            if (null == responseCommand) {
+                if (responseFuture.isSendRequestOK()) {
+                    throw new Exception();
+                } else {
+                    throw new Exception();
+                }
+            }
+
+            return responseCommand;
+        } finally {
+            this.responseTable.remove(opaque);
         }
     }
 
