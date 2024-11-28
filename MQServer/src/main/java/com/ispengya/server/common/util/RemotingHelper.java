@@ -1,7 +1,9 @@
 package com.ispengya.server.common.util;
 
-import com.ispengya.server.netty.NettyConnectManageHandler;
+import com.ispengya.server.netty.NettyServerConnectManageHandler;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class RemotingHelper {
-    private static final Logger log = LoggerFactory.getLogger(NettyConnectManageHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(NettyServerConnectManageHandler.class);
 
     public static final String ROCKETMQ_REMOTING = "RocketmqRemoting";
     public static final String DEFAULT_CHARSET = "UTF-8";
@@ -66,6 +68,17 @@ public class RemotingHelper {
             }
         }
         return "";
+    }
+
+    public static void closeChannel(Channel channel) {
+        final String addrRemote = RemotingHelper.parseChannelRemoteAddr(channel);
+        channel.close().addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                log.info("closeChannel: close the connection to remote address[{}] result: {}", addrRemote,
+                        future.isSuccess());
+            }
+        });
     }
 
 }

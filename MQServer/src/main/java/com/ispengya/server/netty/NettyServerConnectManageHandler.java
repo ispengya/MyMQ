@@ -6,8 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NettyConnectManageHandler extends ChannelDuplexHandler {
-        private static final Logger log = LoggerFactory.getLogger(NettyConnectManageHandler.class);
+public class NettyServerConnectManageHandler extends ChannelDuplexHandler {
+        private static final Logger log = LoggerFactory.getLogger(NettyServerConnectManageHandler.class);
 
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) throws Exception {

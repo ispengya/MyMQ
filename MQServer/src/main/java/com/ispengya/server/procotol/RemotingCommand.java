@@ -1,7 +1,6 @@
 package com.ispengya.server.procotol;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.ispengya.server.common.constant.MQCode;
+import com.ispengya.server.common.constant.MQNettyAllCode;
 import com.ispengya.server.common.exception.RemotingCommandException;
 import com.ispengya.server.CommandCustomHeader;
 import com.sun.istack.internal.NotNull;
@@ -61,7 +60,7 @@ public class RemotingCommand {
     }
 
     public static RemotingCommand createResponseCommand(Class<? extends CommandCustomHeader> classHeader) {
-        return createResponseCommand(MQCode.SYSTEM_ERROR, "not set any response code", classHeader);
+        return createResponseCommand(MQNettyAllCode.SYSTEM_ERROR, "not set any response code", classHeader);
     }
 
     public static RemotingCommand createResponseCommand(int code, String remark,
@@ -100,7 +99,7 @@ public class RemotingCommand {
         byte[] headerData = new byte[headerLength];
         byteBuffer.get(headerData);
 
-        RemotingCommand cmd = RemotingSerializable.decode(headerData, RemotingCommand.class);
+        RemotingCommand cmd = MQSerializable.decode(headerData, RemotingCommand.class);
 
         int bodyLength = length - 4 - headerLength;
         byte[] bodyData = null;
@@ -148,7 +147,7 @@ public class RemotingCommand {
 
     private byte[] headerEncode() {
         this.makeCustomHeaderToNet();
-        return RemotingSerializable.encode(this);
+        return MQSerializable.encode(this);
     }
 
     public void makeCustomHeaderToNet() {

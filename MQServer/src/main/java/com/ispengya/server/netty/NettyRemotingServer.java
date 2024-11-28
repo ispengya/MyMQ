@@ -23,17 +23,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class NettyRemotingServer {
     private static final Logger log = LoggerFactory.getLogger(NettyRemotingServer.class);
+
+    //netty配置
     private final ServerBootstrap serverBootstrap;
-    private final EventLoopGroup eventLoopGroupSelector;
     private final EventLoopGroup eventLoopGroupBoss;
+    private final EventLoopGroup eventLoopGroupSelector;
     private final NettyServerConfig nettyServerConfig;
 
-    private final ExecutorService publicExecutor;
-    private final ChannelEventListener channelEventListener;
-
+    //netty处理事件线程池
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
+    private final ExecutorService publicExecutor;
 
-
+    private final ChannelEventListener channelEventListener;
+    protected final NettyServerEventExecutor nettyServerEventExecutor = new NettyServerEventExecutor();
     private int port = 0;
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig) {
@@ -45,6 +47,9 @@ public class NettyRemotingServer {
         this.serverBootstrap = new ServerBootstrap();
         this.nettyServerConfig = nettyServerConfig;
         this.channelEventListener = channelEventListener;
+        if (channelEventListener != null) {
+            this.nettyServerEventExecutor.setChannelEventListener(channelEventListener);
+        }
 
         int publicThreadNums = nettyServerConfig.getServerCallbackExecutorThreads();
         if (publicThreadNums <= 0) {
@@ -111,7 +116,7 @@ public class NettyRemotingServer {
                                                 new NettyEncoder(),
                                                 new NettyDecoder(),
                                                 new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
-                                                new NettyConnectManageHandler(),
+                                                new NettyServerConnectManageHandler(),
                                                 new NettyServerHandler()
                                         );
                             }
@@ -128,6 +133,10 @@ public class NettyRemotingServer {
         } catch (InterruptedException e1) {
             throw new RuntimeException("this.serverBootstrap.bind().sync() InterruptedException", e1);
         }
+
+        if (this.channelEventListener != null) {
+            this.nettyServerEventExecutor.start();
+        }
     }
 
     public void shutdown() {
@@ -136,6 +145,10 @@ public class NettyRemotingServer {
             this.eventLoopGroupBoss.shutdownGracefully();
 
             this.eventLoopGroupSelector.shutdownGracefully();
+
+            if (this.nettyServerEventExecutor != null) {
+                this.nettyServerEventExecutor.shutdown();
+            }
 
             if (this.defaultEventExecutorGroup != null) {
                 this.defaultEventExecutorGroup.shutdownGracefully();
