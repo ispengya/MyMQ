@@ -10,8 +10,9 @@
     <packaging>pom</packaging>
     <modules>
 
-        <module>NameSpace</module>
-        <module>MQCore</module>
+        <module>mq-space</module>
+        <module>mq-core</module>
+        <module>common</module>
     </modules>
 
     <properties>

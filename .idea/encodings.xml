@@ -3,8 +3,12 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/MQServer/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/MQServer/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/NameSpace/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/NameSpace/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mq-core/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mq-core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mq-space/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mq-space/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
