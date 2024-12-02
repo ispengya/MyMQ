@@ -2,7 +2,7 @@ package com.ispengya.core;
 
 import cn.hutool.core.util.StrUtil;
 import com.ispengya.core.config.BrokerConfig;
-import com.ispengya.mq.util.IOUtil;
+import com.ispengya.mq.util.AllUtil;
 import com.ispengya.server.common.exception.SimpleServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MQCoreStartUp {
 
     private static final Logger log = LoggerFactory.getLogger(MQCoreStartUp.class);
-    public static final String MQCORE_CONF_PROPERTIES_PATH = "MQCORE_CONF_PROPERTIES_PATH";
+    public static final String CONFIG_HOME = "CONFIG_HOME";
     private static Properties properties;
 
     public static void main(String[] args ) {
@@ -37,19 +37,19 @@ public class MQCoreStartUp {
 
     public static MQCoreController createMQCoreController() throws IOException {
         //must be set
-        String config_path = System.getenv(MQCORE_CONF_PROPERTIES_PATH);
-        if (StrUtil.isBlank(config_path)) {
-            log.error("broker config path is empty");
+        String configHomePath = System.getenv(CONFIG_HOME);
+        if (StrUtil.isBlank(configHomePath)) {
+            log.error("config home path is empty");
             System.exit(1);
         }
 
 
         //broker config
         final BrokerConfig brokerConfig = new BrokerConfig();
-        InputStream in = new BufferedInputStream(new FileInputStream(config_path));
+        InputStream in = new BufferedInputStream(new FileInputStream(configHomePath+"/broker.conf"));
         properties = new Properties();
         properties.load(in);
-        IOUtil.properties2Object(properties, brokerConfig);
+        AllUtil.properties2Object(properties, brokerConfig);
 
 
         final MQCoreController mqCoreController = new MQCoreController(brokerConfig);

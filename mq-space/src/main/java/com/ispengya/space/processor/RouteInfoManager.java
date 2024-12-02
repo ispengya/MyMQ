@@ -1,6 +1,6 @@
 package com.ispengya.space.processor;
 
-import com.ispengya.mq.BrokerData;
+import com.ispengya.mq.core.BrokerData;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

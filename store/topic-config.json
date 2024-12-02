@@ -1,0 +1,17 @@
+{
+	"dataVersion":{
+		"counter":2,
+		"timestamp":1732627898364
+	},
+	"topicConfigTable":{
+		"tst":{
+			"order":false,
+			"readQueueNums":8,
+			"topicFilterType":"SINGLE_TAG",
+			"topicName":"tst",
+			"topicSysFlag":0,
+			"writeQueueNums":8
+		},
+		"test":{"$ref":"$.topicConfigTable.tst"}
+	}
+}

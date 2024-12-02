@@ -1,12 +1,12 @@
 package com.ispengya.core.config;
 
-import com.ispengya.mq.util.IOUtil;
+import com.ispengya.mq.util.AllUtil;
 
 public class BrokerConfig {
     private String namesrvAddr;
     private String brokerName = "DEFAULT_BROKER";
     private String brokerClusterName = "DefaultCluster";
-    private String brokerAddr = IOUtil.getLocalAddress();
+    private String brokerAddr = AllUtil.getLocalAddress();
     private long brokerId = 0l;
     private int listenPort = 0;
 

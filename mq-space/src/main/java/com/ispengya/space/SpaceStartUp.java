@@ -1,7 +1,7 @@
 package com.ispengya.space;
 
 import cn.hutool.core.util.StrUtil;
-import com.ispengya.mq.util.IOUtil;
+import com.ispengya.mq.util.AllUtil;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.server.ServerConfig;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public class SpaceStartUp {
             InputStream in = new BufferedInputStream(new FileInputStream(config_path));
             properties = new Properties();
             properties.load(in);
-            IOUtil.properties2Object(properties, serverConfig);
+            AllUtil.properties2Object(properties, serverConfig);
         }
         //创建 spaceController
         return new SpaceController(serverConfig);
