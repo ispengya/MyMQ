@@ -46,8 +46,6 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
     private SimpleServerTransContext registerBroker(ChannelHandlerContext chc, SimpleServerTransContext request) throws SimpleServerException {
         RegisterBrokerRequestHeader customHeader = (RegisterBrokerRequestHeader) request.decodeSSTCustomHeader(RegisterBrokerRequestHeader.class);
         this.spaceController.getRouteInfoManager().registerBroker(customHeader.getBrokerAddr(), customHeader.getBrokerName(),customHeader.getBrokerId(),chc.channel());
-        customHeader.setBrokerId(22222L);
-        request.setCustomHeader(customHeader);
         return request;
     }
 

@@ -1,12 +1,16 @@
 package com.ispengya.space;
 
 import cn.hutool.core.util.StrUtil;
+import com.ispengya.mq.util.IOUtil;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.server.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -36,18 +40,16 @@ public class SpaceStartUp {
 
     public static SpaceController createSpaceController() throws IOException {
         String config_path = System.getProperty(SPACE_CONF_PROPERTIES_PATH);
-        if (StrUtil.isBlank(config_path)) {
-            log.error("Space config path is empty");
-//            System.exit(1);
-        }
-
         //server config
         final ServerConfig serverConfig = new ServerConfig();
-//        InputStream in = new BufferedInputStream(new FileInputStream(config_path));
-//        properties = new Properties();
-//        properties.load(in);
-//        IOUtil.properties2Object(properties, serverConfig);
-
+        serverConfig.setListenPort(9876);
+        if (StrUtil.isNotBlank(config_path)) {
+            log.warn("Space config path is empty");
+            InputStream in = new BufferedInputStream(new FileInputStream(config_path));
+            properties = new Properties();
+            properties.load(in);
+            IOUtil.properties2Object(properties, serverConfig);
+        }
         //创建 spaceController
         return new SpaceController(serverConfig);
     }

@@ -1,8 +1,6 @@
 package com.ispengya.space.processor;
 
 import com.ispengya.mq.BrokerData;
-import com.ispengya.mq.DataVersion;
-import com.ispengya.mq.RegisterBrokerResult;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,12 +21,11 @@ public class RouteInfoManager {
         this.brokerLiveTable = new HashMap<String, BrokerLiveInfo>(256);
     }
 
-    public RegisterBrokerResult registerBroker(
+    public void registerBroker(
             final String brokerAddr,
             final String brokerName,
             final long brokerId,
             final Channel channel) {
-        RegisterBrokerResult result = new RegisterBrokerResult();
         try {
             try {
                 this.lock.writeLock().lockInterruptibly();
@@ -43,7 +40,6 @@ public class RouteInfoManager {
         } catch (Exception e) {
             log.error("registerBroker Exception", e);
         }
-        return result;
     }
 
 
@@ -51,14 +47,12 @@ public class RouteInfoManager {
 
 class BrokerLiveInfo {
     private long lastUpdateTimestamp;
-    private DataVersion dataVersion;
     private Channel channel;
     private String haServerAddr;
 
-    public BrokerLiveInfo(long lastUpdateTimestamp, DataVersion dataVersion, Channel channel,
+    public BrokerLiveInfo(long lastUpdateTimestamp, Channel channel,
         String haServerAddr) {
         this.lastUpdateTimestamp = lastUpdateTimestamp;
-        this.dataVersion = dataVersion;
         this.channel = channel;
         this.haServerAddr = haServerAddr;
     }
@@ -71,13 +65,6 @@ class BrokerLiveInfo {
         this.lastUpdateTimestamp = lastUpdateTimestamp;
     }
 
-    public DataVersion getDataVersion() {
-        return dataVersion;
-    }
-
-    public void setDataVersion(DataVersion dataVersion) {
-        this.dataVersion = dataVersion;
-    }
 
     public Channel getChannel() {
         return channel;
@@ -97,7 +84,10 @@ class BrokerLiveInfo {
 
     @Override
     public String toString() {
-        return "BrokerLiveInfo [lastUpdateTimestamp=" + lastUpdateTimestamp + ", dataVersion=" + dataVersion
-            + ", channel=" + channel + ", haServerAddr=" + haServerAddr + "]";
+        return "BrokerLiveInfo{" +
+                "lastUpdateTimestamp=" + lastUpdateTimestamp +
+                ", channel=" + channel +
+                ", haServerAddr='" + haServerAddr + '\'' +
+                '}';
     }
 }

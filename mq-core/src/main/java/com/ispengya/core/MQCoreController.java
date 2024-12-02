@@ -1,6 +1,7 @@
 package com.ispengya.core;
 
 import com.ispengya.core.api.MQOuterAPI;
+import com.ispengya.core.config.BrokerConfig;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.client.ClientConfig;
 import com.ispengya.server.netty.client.SimpleClient;
@@ -12,12 +13,14 @@ import com.ispengya.server.netty.client.SimpleClient;
  **/
 public class MQCoreController {
     private final ClientConfig clientConfig;
+    private final BrokerConfig brokerConfig;
     private final MQOuterAPI mqOuterAPI;
     private SimpleClient simpleClient;
 
-    public MQCoreController(ClientConfig clientConfig) {
-        this.clientConfig = clientConfig;
-        this.mqOuterAPI = new MQOuterAPI(clientConfig);
+    public MQCoreController(BrokerConfig brokerConfig) {
+        this.clientConfig = new ClientConfig();
+        this.brokerConfig = brokerConfig;
+        this.mqOuterAPI = new MQOuterAPI(clientConfig, brokerConfig);
     }
 
     public void start() {
@@ -29,7 +32,7 @@ public class MQCoreController {
 
     private void registerBrokerAll() {
         try {
-            this.mqOuterAPI.registerBrokerAll("1111","11111",1111, false);
+            this.mqOuterAPI.registerBrokerAll(brokerConfig.getBrokerAddr(), brokerConfig.getBrokerName(), brokerConfig.getBrokerId(), false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

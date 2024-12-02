@@ -1,6 +1,6 @@
 package com.ispengya.core.api;
 
-import com.ispengya.mq.RegisterBrokerResult;
+import com.ispengya.core.config.BrokerConfig;
 import com.ispengya.mq.constant.RequestCode;
 import com.ispengya.mq.constant.ResponseCode;
 import com.ispengya.mq.header.RegisterBrokerRequestHeader;
@@ -11,9 +11,6 @@ import com.ispengya.server.procotol.SimpleServerTransContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @description:
  * @author: hanzhipeng
@@ -22,9 +19,11 @@ import java.util.List;
 public class MQOuterAPI {
     private static final Logger log = LoggerFactory.getLogger(MQOuterAPI.class);
     private final ClientConfig clientConfig;
+    private final BrokerConfig brokerConfig;
     private SimpleClient client;
 
-    public MQOuterAPI(ClientConfig clientConfig) {
+    public MQOuterAPI(ClientConfig clientConfig, BrokerConfig brokerConfig) {
+        this.brokerConfig = brokerConfig;
         this.clientConfig = clientConfig;
     }
 
@@ -41,14 +40,12 @@ public class MQOuterAPI {
         this.client.stop();
     }
 
-    public List<RegisterBrokerResult> registerBrokerAll(
+    public void registerBrokerAll(
             final String brokerAddr,
             final String brokerName,
             final long brokerId,
             final boolean oneway) throws Exception {
-        final List<RegisterBrokerResult> registerBrokerResultList = new ArrayList<>();
-        //TODO 获取space地址
-        String namesrvAddr = "127.0.0.1:6666";
+        String namesrvAddr = brokerConfig.getNamesrvAddr();
         final RegisterBrokerRequestHeader requestHeader = new RegisterBrokerRequestHeader();
         requestHeader.setBrokerAddr(brokerAddr);
         requestHeader.setBrokerId(brokerId);
@@ -61,18 +58,17 @@ public class MQOuterAPI {
             } catch (Exception e) {
                 // Ignore
             }
-            return null;
+            return;
         }
 
         SimpleServerTransContext response = this.client.invokeSync(namesrvAddr, request, 30 * 1000);
         assert response != null;
         switch (response.getStatusCode()) {
             case ResponseCode.SUCCESS: {
-                System.out.println("成功"+ response);
+                log.info("broker info [ {}-{}-{} ] successfully registered", brokerName, brokerAddr, brokerId);
             }
             default:
                 break;
         }
-        return registerBrokerResultList;
     }
 }
