@@ -1,12 +1,12 @@
 package com.ispengya.space.processor;
 
+import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.mq.constant.RequestCode;
-import com.ispengya.mq.body.TopicConfigWrapper;
 import com.ispengya.mq.header.RegisterBrokerRequestHeader;
+import com.ispengya.mq.util.MQSerializer;
 import com.ispengya.server.SimpleServerProcessor;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.common.util.SimpleServerUtil;
-import com.ispengya.server.procotol.SimpleServerSerializable;
 import com.ispengya.server.procotol.SimpleServerTransContext;
 import com.ispengya.space.SpaceController;
 import io.netty.channel.ChannelHandlerContext;
@@ -48,12 +48,16 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
     private SimpleServerTransContext registerBroker(ChannelHandlerContext chc, SimpleServerTransContext request) throws SimpleServerException {
         //resolve header
         RegisterBrokerRequestHeader customHeader = (RegisterBrokerRequestHeader) request.decodeSSTCustomHeader(RegisterBrokerRequestHeader.class);
-        TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
+        TopicConfigBody topicConfigBody = new TopicConfigBody();
         //resolve body
         if (request.getBody() !=null) {
-            topicConfigWrapper = SimpleServerSerializable.decode(request.getBody(), TopicConfigWrapper.class);
+            topicConfigBody = MQSerializer.decode(request.getBody(), TopicConfigBody.class);
         }
-        this.spaceController.getRouteInfoManager().registerBroker(customHeader.getBrokerAddr(), customHeader.getBrokerName(),customHeader.getBrokerId(), topicConfigWrapper);
+        this.spaceController.getRouteInfoManager().registerBroker(customHeader.getBrokerAddr(),
+                customHeader.getBrokerName(),
+                customHeader.getBrokerId(),
+                topicConfigBody,
+                chc.channel());
         return request;
     }
 

@@ -1,9 +1,11 @@
 package com.ispengya.space.processor;
 
 import com.ispengya.mq.QueueData;
+import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.mq.core.BrokerData;
+import com.ispengya.mq.core.DataVersion;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.body.TopicConfigWrapper;
+import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,41 +19,79 @@ public class RouteInfoManager {
     private static final Logger log = LoggerFactory.getLogger(RouteInfoManager.class);
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+    private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
 
     public RouteInfoManager() {
         this.brokerAddrTable = new HashMap<String, BrokerData>(128);
         this.topicQueueTable = new HashMap<String, List<QueueData>>(1024);
+        this.brokerLiveTable = new HashMap<String, BrokerLiveInfo>(256);
     }
 
     public void registerBroker(
             final String brokerAddr,
             final String brokerName,
             final long brokerId,
-            final TopicConfigWrapper topicConfigWrapper) {
+            final TopicConfigBody topicConfigBody,
+            final Channel channel) {
         try {
             try {
                 this.lock.writeLock().lockInterruptibly();
+                boolean registerFirst = false;
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
+                    registerFirst = true;
                     brokerData = new BrokerData(brokerName, new HashMap<Long, String>());
                     this.brokerAddrTable.put(brokerName, brokerData);
                 }
-                brokerData.getBrokerAddrs().put(brokerId, brokerAddr);
+
+                String oldAddr = brokerData.getBrokerAddrs().put(brokerId, brokerAddr);
+                registerFirst = registerFirst || (null == oldAddr);
+
                 //init queuedata
-                ConcurrentMap<String, TopicConfig> tcTable =
-                        topicConfigWrapper.getTopicConfigTable();
-                if (tcTable != null) {
-                    for (Map.Entry<String, TopicConfig> entry : tcTable.entrySet()) {
-                        this.createAndUpdateQueueData(brokerName, entry.getValue());
+                if (null != topicConfigBody) {
+                    if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigBody.getDataVersion())
+                            || registerFirst) {
+                        ConcurrentMap<String, TopicConfig> tcTable =
+                                topicConfigBody.getTopicConfigTable();
+                        if (tcTable != null) {
+                            for (Map.Entry<String, TopicConfig> entry : tcTable.entrySet()) {
+                                this.createAndUpdateQueueData(brokerName, entry.getValue());
+                            }
+                        }
                     }
                 }
+
+                //store broker live info
+                this.brokerLiveTable.put(brokerAddr,
+                        new BrokerLiveInfo(
+                                System.currentTimeMillis(),
+                                topicConfigBody.getDataVersion(),
+                                channel));
             } finally {
                 this.lock.writeLock().unlock();
             }
         } catch (Exception e) {
             log.error("registerBroker Exception", e);
         }
+    }
+
+    public boolean isBrokerTopicConfigChanged(final String brokerAddr, final DataVersion dataVersion) {
+        DataVersion prev = queryBrokerTopicConfig(brokerAddr);
+        return null == prev || !prev.equals(dataVersion);
+    }
+
+    public DataVersion queryBrokerTopicConfig(final String brokerAddr) {
+        BrokerLiveInfo prev = this.brokerLiveTable.get(brokerAddr);
+        if (prev != null) {
+            return prev.getDataVersion();
+        }
+        return null;
+    }
+
+    public void onChannelDestroy(String remoteAddr, Channel channel) {
+        //TODO Clean up channel-related data
+        log.info("onChannelDestroy {}", remoteAddr);
     }
 
     private void createAndUpdateQueueData(final String brokerName, final TopicConfig topicConfig) {
@@ -91,4 +131,47 @@ public class RouteInfoManager {
     }
 
 
+}
+
+class BrokerLiveInfo {
+    private long lastUpdateTimestamp;
+    private DataVersion dataVersion;
+    private Channel channel;
+
+    public BrokerLiveInfo(long lastUpdateTimestamp, DataVersion dataVersion, Channel channel) {
+        this.lastUpdateTimestamp = lastUpdateTimestamp;
+        this.dataVersion = dataVersion;
+        this.channel = channel;
+    }
+
+    public long getLastUpdateTimestamp() {
+        return lastUpdateTimestamp;
+    }
+
+    public void setLastUpdateTimestamp(long lastUpdateTimestamp) {
+        this.lastUpdateTimestamp = lastUpdateTimestamp;
+    }
+
+    public DataVersion getDataVersion() {
+        return dataVersion;
+    }
+
+    public void setDataVersion(DataVersion dataVersion) {
+        this.dataVersion = dataVersion;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
+    }
+
+
+    @Override
+    public String toString() {
+        return "BrokerLiveInfo [lastUpdateTimestamp=" + lastUpdateTimestamp + ", dataVersion=" + dataVersion
+                + ", channel=" + channel;
+    }
 }

@@ -4,6 +4,7 @@ import com.ispengya.mq.util.ThreadFactoryImpl;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.server.ServerConfig;
 import com.ispengya.server.netty.server.SimpleServer;
+import com.ispengya.space.processor.BrokerHousekeepingService;
 import com.ispengya.space.processor.DefaultRequestProcessor;
 import com.ispengya.space.processor.RouteInfoManager;
 
@@ -20,6 +21,7 @@ public class SpaceController {
     private final ServerConfig serverConfig;
     private ExecutorService spaceProcessorExecutor;
     private final RouteInfoManager routeInfoManager;
+    private BrokerHousekeepingService  brokerHousekeepingService;
 
     public SpaceController(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
@@ -29,6 +31,7 @@ public class SpaceController {
     public void init() {
         this.server = new SimpleServer(serverConfig);
         this.spaceProcessorExecutor = Executors.newFixedThreadPool(serverConfig.getServerWorkerThreads(), new ThreadFactoryImpl("SpaceProcessorExecutorThread_"));
+        this.brokerHousekeepingService = new BrokerHousekeepingService(this);
         this.registerProcessor();
     }
 

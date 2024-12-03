@@ -1,4 +1,8 @@
 {
+	"dataVersion":{
+		"counter":2,
+		"timestamp":1732627898364
+	},
 	"topicConfigTable":{
 		"test":{
 			"order":false,

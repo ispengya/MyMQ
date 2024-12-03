@@ -4,7 +4,7 @@ import com.ispengya.core.api.MQOuterAPI;
 import com.ispengya.core.config.BrokerConfig;
 import com.ispengya.core.topic.TopicConfigManager;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.body.TopicConfigWrapper;
+import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.client.ClientConfig;
 import com.ispengya.server.netty.client.SimpleClient;
@@ -40,11 +40,11 @@ public class MQCoreController {
     private void registerBrokerAll() {
         try {
             ConcurrentMap<String, TopicConfig> topicConfigTable = topicConfigManager.getTopicConfigTable();
-            TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
+            TopicConfigBody topicConfigBody = new TopicConfigBody();
             if (topicConfigTable != null) {
-                topicConfigWrapper.setTopicConfigTable(topicConfigTable);
+                topicConfigBody.setTopicConfigTable(topicConfigTable);
             }
-            this.mqOuterAPI.registerBrokerAll(brokerConfig.getBrokerAddr(), brokerConfig.getBrokerName(), brokerConfig.getBrokerId(), topicConfigWrapper, false);
+            this.mqOuterAPI.registerBrokerAll(brokerConfig.getBrokerAddr(), brokerConfig.getBrokerName(), brokerConfig.getBrokerId(), topicConfigBody, false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

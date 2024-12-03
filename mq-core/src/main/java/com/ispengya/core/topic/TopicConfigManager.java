@@ -1,10 +1,11 @@
 package com.ispengya.core.topic;
 
 import com.ispengya.core.MQCoreController;
+import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.mq.config.ConfigManager;
+import com.ispengya.mq.core.DataVersion;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.body.TopicConfigWrapper;
-import com.ispengya.server.procotol.SimpleServerSerializable;
+import com.ispengya.mq.util.MQSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,13 +20,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class TopicConfigManager extends ConfigManager {
 
-    private static final long LOCK_TIMEOUT_MILLIS = 3000;
     private static final Logger log = LoggerFactory.getLogger(TopicConfigManager.class);
+    private static final long LOCK_TIMEOUT_MILLIS = 3000;
     private transient final Lock lockTopicConfigTable = new ReentrantLock();
 
     private final ConcurrentMap<String, TopicConfig> topicConfigTable =
             new ConcurrentHashMap<String, TopicConfig>(1024);
     private final Set<String> systemTopicList = new HashSet<String>();
+    private final DataVersion dataVersion = new DataVersion();
     private transient MQCoreController brokerController;
 
     public TopicConfigManager() {
@@ -46,10 +48,10 @@ public class TopicConfigManager extends ConfigManager {
     }
 
 
-    public TopicConfigWrapper buildTopicConfigSerializeWrapper() {
-        TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
-        topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
-        return topicConfigWrapper;
+    public TopicConfigBody buildTopicConfigSerializeWrapper() {
+        TopicConfigBody topicConfigBody = new TopicConfigBody();
+        topicConfigBody.setTopicConfigTable(this.topicConfigTable);
+        return topicConfigBody;
     }
 
     @Override
@@ -65,30 +67,32 @@ public class TopicConfigManager extends ConfigManager {
     @Override
     public void decode(String jsonString) {
         if (jsonString != null) {
-            TopicConfigWrapper topicConfigWrapper =
-                    SimpleServerSerializable.fromJson(jsonString, TopicConfigWrapper.class);
-            if (topicConfigWrapper != null) {
-                this.topicConfigTable.putAll(topicConfigWrapper.getTopicConfigTable());
-                this.printLoadDataWhenFirstBoot(topicConfigWrapper);
+            TopicConfigBody topicConfigBody =
+                    MQSerializer.fromJson(jsonString, TopicConfigBody.class);
+            if (topicConfigBody != null) {
+                this.topicConfigTable.putAll(topicConfigBody.getTopicConfigTable());
+                this.dataVersion.assignNewOne(topicConfigBody.getDataVersion());
+                this.printLoadDataWhenFirstBoot(topicConfigBody);
             }
         }
     }
 
     public String encode(final boolean prettyFormat) {
-        TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
-        topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
-        return SimpleServerSerializable.toJson(topicConfigWrapper, prettyFormat);
+        TopicConfigBody topicConfigBody = new TopicConfigBody();
+        topicConfigBody.setTopicConfigTable(this.topicConfigTable);
+        topicConfigBody.setDataVersion(this.dataVersion);
+        return MQSerializer.toJson(topicConfigBody, prettyFormat);
     }
 
-    private void printLoadDataWhenFirstBoot(final TopicConfigWrapper tcs) {
+    public ConcurrentMap<String, TopicConfig> getTopicConfigTable() {
+        return topicConfigTable;
+    }
+
+    private void printLoadDataWhenFirstBoot(final TopicConfigBody tcs) {
         Iterator<Entry<String, TopicConfig>> it = tcs.getTopicConfigTable().entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, TopicConfig> next = it.next();
             log.info("load exist local topic, {}", next.getValue().toString());
         }
-    }
-
-    public ConcurrentMap<String, TopicConfig> getTopicConfigTable() {
-        return topicConfigTable;
     }
 }
