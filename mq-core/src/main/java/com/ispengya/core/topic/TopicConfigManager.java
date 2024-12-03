@@ -3,8 +3,7 @@ package com.ispengya.core.topic;
 import com.ispengya.core.MQCoreController;
 import com.ispengya.mq.config.ConfigManager;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.core.common.DataVersion;
-import com.ispengya.mq.core.common.TopicConfigSerializeWrapper;
+import com.ispengya.mq.core.common.TopicConfigWrapper;
 import com.ispengya.server.procotol.SimpleServerSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +47,11 @@ public class TopicConfigManager extends ConfigManager {
     }
 
 
-    public TopicConfigSerializeWrapper buildTopicConfigSerializeWrapper() {
-        TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
-        topicConfigSerializeWrapper.setTopicConfigTable(this.topicConfigTable);
-        topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
-        return topicConfigSerializeWrapper;
+    public TopicConfigWrapper buildTopicConfigSerializeWrapper() {
+        TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
+        topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
+        topicConfigWrapper.setDataVersion(this.dataVersion);
+        return topicConfigWrapper;
     }
 
     @Override
@@ -68,24 +67,24 @@ public class TopicConfigManager extends ConfigManager {
     @Override
     public void decode(String jsonString) {
         if (jsonString != null) {
-            TopicConfigSerializeWrapper topicConfigSerializeWrapper =
-                    SimpleServerSerializable.fromJson(jsonString, TopicConfigSerializeWrapper.class);
-            if (topicConfigSerializeWrapper != null) {
-                this.topicConfigTable.putAll(topicConfigSerializeWrapper.getTopicConfigTable());
-                this.dataVersion.assignNewOne(topicConfigSerializeWrapper.getDataVersion());
-                this.printLoadDataWhenFirstBoot(topicConfigSerializeWrapper);
+            TopicConfigWrapper topicConfigWrapper =
+                    SimpleServerSerializable.fromJson(jsonString, TopicConfigWrapper.class);
+            if (topicConfigWrapper != null) {
+                this.topicConfigTable.putAll(topicConfigWrapper.getTopicConfigTable());
+                this.dataVersion.assignNewOne(topicConfigWrapper.getDataVersion());
+                this.printLoadDataWhenFirstBoot(topicConfigWrapper);
             }
         }
     }
 
     public String encode(final boolean prettyFormat) {
-        TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
-        topicConfigSerializeWrapper.setTopicConfigTable(this.topicConfigTable);
-        topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
-        return SimpleServerSerializable.toJson(topicConfigSerializeWrapper, prettyFormat);
+        TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
+        topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
+        topicConfigWrapper.setDataVersion(this.dataVersion);
+        return SimpleServerSerializable.toJson(topicConfigWrapper, prettyFormat);
     }
 
-    private void printLoadDataWhenFirstBoot(final TopicConfigSerializeWrapper tcs) {
+    private void printLoadDataWhenFirstBoot(final TopicConfigWrapper tcs) {
         Iterator<Entry<String, TopicConfig>> it = tcs.getTopicConfigTable().entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, TopicConfig> next = it.next();
