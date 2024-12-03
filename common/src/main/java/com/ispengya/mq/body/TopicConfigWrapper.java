@@ -1,4 +1,4 @@
-package com.ispengya.mq.core.common;
+package com.ispengya.mq.body;
 
 import com.ispengya.mq.core.TopicConfig;
 

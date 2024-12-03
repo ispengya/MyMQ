@@ -1,12 +1,14 @@
 package com.ispengya.core.api;
 
 import com.ispengya.core.config.BrokerConfig;
+import com.ispengya.mq.body.TopicConfigWrapper;
 import com.ispengya.mq.constant.RequestCode;
 import com.ispengya.mq.constant.ResponseCode;
 import com.ispengya.mq.header.RegisterBrokerRequestHeader;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.client.ClientConfig;
 import com.ispengya.server.netty.client.SimpleClient;
+import com.ispengya.server.procotol.SimpleServerSerializable;
 import com.ispengya.server.procotol.SimpleServerTransContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ public class MQOuterAPI {
             final String brokerAddr,
             final String brokerName,
             final long brokerId,
+            final TopicConfigWrapper topicConfigWrapper,
             final boolean oneway) throws Exception {
         String namesrvAddr = brokerConfig.getNamesrvAddr();
         final RegisterBrokerRequestHeader requestHeader = new RegisterBrokerRequestHeader();
@@ -51,6 +54,8 @@ public class MQOuterAPI {
         requestHeader.setBrokerId(brokerId);
         requestHeader.setBrokerName(brokerName);
         SimpleServerTransContext request = SimpleServerTransContext.createRequestSST(RequestCode.REGISTER_BROKER, requestHeader);
+
+        request.setBody(SimpleServerSerializable.encode(topicConfigWrapper));
 
         if (oneway) {
             try {

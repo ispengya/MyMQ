@@ -3,9 +3,13 @@ package com.ispengya.core;
 import com.ispengya.core.api.MQOuterAPI;
 import com.ispengya.core.config.BrokerConfig;
 import com.ispengya.core.topic.TopicConfigManager;
+import com.ispengya.mq.core.TopicConfig;
+import com.ispengya.mq.body.TopicConfigWrapper;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.client.ClientConfig;
 import com.ispengya.server.netty.client.SimpleClient;
+
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @description:
@@ -35,7 +39,12 @@ public class MQCoreController {
 
     private void registerBrokerAll() {
         try {
-            this.mqOuterAPI.registerBrokerAll(brokerConfig.getBrokerAddr(), brokerConfig.getBrokerName(), brokerConfig.getBrokerId(), false);
+            ConcurrentMap<String, TopicConfig> topicConfigTable = topicConfigManager.getTopicConfigTable();
+            TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
+            if (topicConfigTable != null) {
+                topicConfigWrapper.setTopicConfigTable(topicConfigTable);
+            }
+            this.mqOuterAPI.registerBrokerAll(brokerConfig.getBrokerAddr(), brokerConfig.getBrokerName(), brokerConfig.getBrokerId(), topicConfigWrapper, false);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

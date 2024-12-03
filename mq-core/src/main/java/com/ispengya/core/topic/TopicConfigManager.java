@@ -3,7 +3,7 @@ package com.ispengya.core.topic;
 import com.ispengya.core.MQCoreController;
 import com.ispengya.mq.config.ConfigManager;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.core.common.TopicConfigWrapper;
+import com.ispengya.mq.body.TopicConfigWrapper;
 import com.ispengya.server.procotol.SimpleServerSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,6 @@ public class TopicConfigManager extends ConfigManager {
 
     private final ConcurrentMap<String, TopicConfig> topicConfigTable =
             new ConcurrentHashMap<String, TopicConfig>(1024);
-    private final DataVersion dataVersion = new DataVersion();
     private final Set<String> systemTopicList = new HashSet<String>();
     private transient MQCoreController brokerController;
 
@@ -50,7 +49,6 @@ public class TopicConfigManager extends ConfigManager {
     public TopicConfigWrapper buildTopicConfigSerializeWrapper() {
         TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
         topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
-        topicConfigWrapper.setDataVersion(this.dataVersion);
         return topicConfigWrapper;
     }
 
@@ -71,7 +69,6 @@ public class TopicConfigManager extends ConfigManager {
                     SimpleServerSerializable.fromJson(jsonString, TopicConfigWrapper.class);
             if (topicConfigWrapper != null) {
                 this.topicConfigTable.putAll(topicConfigWrapper.getTopicConfigTable());
-                this.dataVersion.assignNewOne(topicConfigWrapper.getDataVersion());
                 this.printLoadDataWhenFirstBoot(topicConfigWrapper);
             }
         }
@@ -80,7 +77,6 @@ public class TopicConfigManager extends ConfigManager {
     public String encode(final boolean prettyFormat) {
         TopicConfigWrapper topicConfigWrapper = new TopicConfigWrapper();
         topicConfigWrapper.setTopicConfigTable(this.topicConfigTable);
-        topicConfigWrapper.setDataVersion(this.dataVersion);
         return SimpleServerSerializable.toJson(topicConfigWrapper, prettyFormat);
     }
 
@@ -90,10 +86,6 @@ public class TopicConfigManager extends ConfigManager {
             Entry<String, TopicConfig> next = it.next();
             log.info("load exist local topic, {}", next.getValue().toString());
         }
-    }
-
-    public DataVersion getDataVersion() {
-        return dataVersion;
     }
 
     public ConcurrentMap<String, TopicConfig> getTopicConfigTable() {

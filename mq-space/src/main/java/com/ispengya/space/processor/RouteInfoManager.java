@@ -3,7 +3,7 @@ package com.ispengya.space.processor;
 import com.ispengya.mq.QueueData;
 import com.ispengya.mq.core.BrokerData;
 import com.ispengya.mq.core.TopicConfig;
-import com.ispengya.mq.core.common.TopicConfigWrapper;
+import com.ispengya.mq.body.TopicConfigWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

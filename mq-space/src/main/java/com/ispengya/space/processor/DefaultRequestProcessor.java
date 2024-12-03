@@ -1,7 +1,7 @@
 package com.ispengya.space.processor;
 
 import com.ispengya.mq.constant.RequestCode;
-import com.ispengya.mq.core.common.TopicConfigWrapper;
+import com.ispengya.mq.body.TopicConfigWrapper;
 import com.ispengya.mq.header.RegisterBrokerRequestHeader;
 import com.ispengya.server.SimpleServerProcessor;
 import com.ispengya.server.common.exception.SimpleServerException;
