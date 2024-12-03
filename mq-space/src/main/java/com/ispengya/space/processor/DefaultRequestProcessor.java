@@ -2,7 +2,11 @@ package com.ispengya.space.processor;
 
 import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.mq.constant.RequestCode;
-import com.ispengya.mq.header.RegisterBrokerRequestHeader;
+import com.ispengya.mq.constant.ResponseCode;
+import com.ispengya.mq.core.DataVersion;
+import com.ispengya.mq.header.req.QueryDataVersionRequestHeader;
+import com.ispengya.mq.header.req.RegisterBrokerRequestHeader;
+import com.ispengya.mq.header.resp.QueryDataVersionResponseHeader;
 import com.ispengya.mq.util.MQSerializer;
 import com.ispengya.server.SimpleServerProcessor;
 import com.ispengya.server.common.exception.SimpleServerException;
@@ -39,15 +43,36 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
         switch (request.getProcessCode()) {
             case RequestCode.REGISTER_BROKER:
                 return this.registerBroker(chc, request);
+            case RequestCode.QUERY_DATA_VERSION:
+                return getDataVersion(request);
             default:
                 break;
         }
         return null;
     }
 
+    private SimpleServerTransContext getDataVersion(SimpleServerTransContext request) throws SimpleServerException {
+        SimpleServerTransContext response = SimpleServerTransContext.createResponseSST(QueryDataVersionResponseHeader.class);
+        QueryDataVersionResponseHeader responseHeader = (QueryDataVersionResponseHeader) response.readCustomHeader();
+        QueryDataVersionRequestHeader requestHeader = ((QueryDataVersionRequestHeader) request.decodeCustomHeaderOfSST(QueryDataVersionRequestHeader.class));
+        DataVersion dataVersion = MQSerializer.decode(request.getBody(), DataVersion.class);
+        boolean changed = this.spaceController.getRouteInfoManager().isBrokerTopicConfigChanged(requestHeader.getBrokerAddr(), dataVersion);
+        if (!changed) {
+            this.spaceController.getRouteInfoManager().updateBrokerInfoUpdateTimestamp(requestHeader.getBrokerAddr());
+        }
+
+        DataVersion nameSeverDataVersion = this.spaceController.getRouteInfoManager().queryBrokerTopicConfig(requestHeader.getBrokerAddr());
+        response.setStatusCode(ResponseCode.SUCCESS);
+        if (nameSeverDataVersion != null) {
+            response.setBody(MQSerializer.encode(nameSeverDataVersion));
+        }
+        responseHeader.setChanged(changed);
+        return response;
+    }
+
     private SimpleServerTransContext registerBroker(ChannelHandlerContext chc, SimpleServerTransContext request) throws SimpleServerException {
         //resolve header
-        RegisterBrokerRequestHeader customHeader = (RegisterBrokerRequestHeader) request.decodeSSTCustomHeader(RegisterBrokerRequestHeader.class);
+        RegisterBrokerRequestHeader customHeader = (RegisterBrokerRequestHeader) request.decodeCustomHeaderOfSST(RegisterBrokerRequestHeader.class);
         TopicConfigBody topicConfigBody = new TopicConfigBody();
         //resolve body
         if (request.getBody() !=null) {

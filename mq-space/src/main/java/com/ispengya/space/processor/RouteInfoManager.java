@@ -89,6 +89,13 @@ public class RouteInfoManager {
         return null;
     }
 
+    public void updateBrokerInfoUpdateTimestamp(final String brokerAddr) {
+        BrokerLiveInfo prev = this.brokerLiveTable.get(brokerAddr);
+        if (prev != null) {
+            prev.setLastUpdateTimestamp(System.currentTimeMillis());
+        }
+    }
+
     public void onChannelDestroy(String remoteAddr, Channel channel) {
         //TODO Clean up channel-related data
         log.info("onChannelDestroy {}", remoteAddr);

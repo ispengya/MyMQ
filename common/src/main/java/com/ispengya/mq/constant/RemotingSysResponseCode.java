@@ -10,5 +10,6 @@ public class RemotingSysResponseCode {
 
     public static final int REQUEST_CODE_NOT_SUPPORTED = 3;
 
-    public static final int TRANSACTION_FAILED = 4;
+    public static final int NOT_CARE = 4;
+
 }

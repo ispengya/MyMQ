@@ -1,19 +1,11 @@
-package com.ispengya.mq.header;
+package com.ispengya.mq.header.req;
 
 import com.ispengya.server.CustomHeader;
 
-public class RegisterBrokerRequestHeader implements CustomHeader {
+public class QueryDataVersionRequestHeader implements CustomHeader {
     private String brokerName;
     private String brokerAddr;
     private Long brokerId;
-
-    public Long getBrokerId() {
-        return brokerId;
-    }
-
-    public void setBrokerId(Long brokerId) {
-        this.brokerId = brokerId;
-    }
 
     public String getBrokerName() {
         return brokerName;
@@ -31,4 +23,11 @@ public class RegisterBrokerRequestHeader implements CustomHeader {
         this.brokerAddr = brokerAddr;
     }
 
+    public Long getBrokerId() {
+        return brokerId;
+    }
+
+    public void setBrokerId(Long brokerId) {
+        this.brokerId = brokerId;
+    }
 }

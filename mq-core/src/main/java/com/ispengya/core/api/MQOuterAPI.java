@@ -4,7 +4,7 @@ import com.ispengya.core.config.BrokerConfig;
 import com.ispengya.mq.body.TopicConfigBody;
 import com.ispengya.mq.constant.RequestCode;
 import com.ispengya.mq.constant.ResponseCode;
-import com.ispengya.mq.header.RegisterBrokerRequestHeader;
+import com.ispengya.mq.header.req.RegisterBrokerRequestHeader;
 import com.ispengya.mq.util.MQSerializer;
 import com.ispengya.server.common.exception.SimpleServerException;
 import com.ispengya.server.netty.client.ClientConfig;
