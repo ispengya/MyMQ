@@ -1,7 +1,7 @@
-package com.ispengya.mq.body;
+package com.ispengya.mq.handlermodel.body;
 
-import com.ispengya.mq.QueueData;
-import com.ispengya.mq.core.BrokerData;
+import com.ispengya.mq.basemodel.QueueData;
+import com.ispengya.mq.basemodel.BrokerData;
 
 import java.util.ArrayList;
 import java.util.List;

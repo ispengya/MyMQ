@@ -1,4 +1,4 @@
-package com.ispengya.mq;
+package com.ispengya.mq.basemodel;
 
 public class QueueData implements Comparable<QueueData> {
     private String brokerName;

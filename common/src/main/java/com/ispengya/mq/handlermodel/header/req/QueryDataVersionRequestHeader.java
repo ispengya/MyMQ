@@ -1,4 +1,4 @@
-package com.ispengya.mq.header.req;
+package com.ispengya.mq.handlermodel.header.req;
 
 import com.ispengya.server.CustomHeader;
 

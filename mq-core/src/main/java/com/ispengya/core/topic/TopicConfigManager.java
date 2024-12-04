@@ -1,10 +1,10 @@
 package com.ispengya.core.topic;
 
 import com.ispengya.core.MQCoreController;
-import com.ispengya.mq.body.TopicConfigBody;
+import com.ispengya.mq.handlermodel.body.TopicConfigBody;
 import com.ispengya.mq.config.ConfigManager;
-import com.ispengya.mq.core.DataVersion;
-import com.ispengya.mq.core.TopicConfig;
+import com.ispengya.mq.basemodel.DataVersion;
+import com.ispengya.mq.basemodel.TopicConfig;
 import com.ispengya.mq.util.MQSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
-package com.ispengya.mq.body;
+package com.ispengya.mq.handlermodel.body;
 
-import com.ispengya.mq.core.DataVersion;
-import com.ispengya.mq.core.TopicConfig;
+import com.ispengya.mq.basemodel.DataVersion;
+import com.ispengya.mq.basemodel.TopicConfig;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

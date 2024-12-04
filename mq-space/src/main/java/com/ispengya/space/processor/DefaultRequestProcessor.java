@@ -1,15 +1,15 @@
 package com.ispengya.space.processor;
 
-import com.ispengya.mq.body.TopicConfigBody;
-import com.ispengya.mq.body.TopicRouteData;
+import com.ispengya.mq.handlermodel.body.TopicConfigBody;
+import com.ispengya.mq.handlermodel.body.TopicRouteData;
 import com.ispengya.mq.constant.RequestCode;
 import com.ispengya.mq.constant.ResponseCode;
-import com.ispengya.mq.core.DataVersion;
-import com.ispengya.mq.header.req.GetRouteInfoRequestHeader;
-import com.ispengya.mq.header.req.QueryDataVersionRequestHeader;
-import com.ispengya.mq.header.req.RegisterBrokerRequestHeader;
-import com.ispengya.mq.header.req.UnRegisterBrokerRequestHeader;
-import com.ispengya.mq.header.resp.QueryDataVersionResponseHeader;
+import com.ispengya.mq.basemodel.DataVersion;
+import com.ispengya.mq.handlermodel.header.req.GetRouteInfoRequestHeader;
+import com.ispengya.mq.handlermodel.header.req.QueryDataVersionRequestHeader;
+import com.ispengya.mq.handlermodel.header.req.RegisterBrokerRequestHeader;
+import com.ispengya.mq.handlermodel.header.req.UnRegisterBrokerRequestHeader;
+import com.ispengya.mq.handlermodel.header.resp.QueryDataVersionResponseHeader;
 import com.ispengya.mq.util.MQSerializer;
 import com.ispengya.server.SimpleServerProcessor;
 import com.ispengya.server.common.exception.SimpleServerException;
@@ -52,6 +52,10 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
                 return unregisterBroker(chc, request);
             case RequestCode.GET_ROUTEINTO_BY_TOPIC:
                 return getRouteInfoByTopic(chc, request);
+            case RequestCode.GET_ALL_TOPIC_LIST_FROM_NAMESERVER:
+                return null;
+            case RequestCode.DELETE_TOPIC_IN_NAMESRV:
+                return null;
             default:
                 break;
         }

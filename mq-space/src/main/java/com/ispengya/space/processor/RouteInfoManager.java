@@ -1,11 +1,11 @@
 package com.ispengya.space.processor;
 
-import com.ispengya.mq.QueueData;
-import com.ispengya.mq.body.TopicConfigBody;
-import com.ispengya.mq.body.TopicRouteData;
-import com.ispengya.mq.core.BrokerData;
-import com.ispengya.mq.core.DataVersion;
-import com.ispengya.mq.core.TopicConfig;
+import com.ispengya.mq.basemodel.QueueData;
+import com.ispengya.mq.handlermodel.body.TopicConfigBody;
+import com.ispengya.mq.handlermodel.body.TopicRouteData;
+import com.ispengya.mq.basemodel.BrokerData;
+import com.ispengya.mq.basemodel.DataVersion;
+import com.ispengya.mq.basemodel.TopicConfig;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -3,12 +3,25 @@ package com.ispengya.core.config;
 import com.ispengya.mq.util.AllUtil;
 
 public class BrokerConfig {
+    private String mqHome = System.getProperty(AllUtil.MYMQ_HOME_PROPERTY, System.getenv(AllUtil.MYMQ_HOME_ENV));
     private String namesrvAddr;
     private String brokerName = "DEFAULT_BROKER";
     private String brokerClusterName = "DefaultCluster";
     private String brokerAddr = AllUtil.getLocalAddress();
     private long brokerId = 0l;
     private int listenPort = 0;
+
+    public String getMqHome() {
+        return mqHome;
+    }
+
+    public void setMqHome(String mqHome) {
+        this.mqHome = mqHome;
+    }
+
+    public void setBrokerAddr(String brokerAddr) {
+        this.brokerAddr = brokerAddr;
+    }
 
     public String getNamesrvAddr() {
         return namesrvAddr;

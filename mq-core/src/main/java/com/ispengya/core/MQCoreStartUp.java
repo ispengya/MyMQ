@@ -36,21 +36,19 @@ public class MQCoreStartUp {
     }
 
     public static MQCoreController createMQCoreController() throws IOException {
-        //must be set
-        String configHomePath = System.getenv(CONFIG_HOME);
-        if (StrUtil.isBlank(configHomePath)) {
-            log.error("config home path is empty");
-            System.exit(1);
-        }
-
-
         //broker config
         final BrokerConfig brokerConfig = new BrokerConfig();
-        InputStream in = new BufferedInputStream(new FileInputStream(configHomePath+"/broker.conf"));
-        properties = new Properties();
-        properties.load(in);
-        AllUtil.properties2Object(properties, brokerConfig);
-
+        //TODO client server
+        //must be set
+        if (StrUtil.isBlank(brokerConfig.getMqHome())) {
+            log.error("config home path is empty");
+            System.exit(1);
+        }else {
+            InputStream in = new BufferedInputStream(new FileInputStream(brokerConfig.getMqHome()+"/conf/broker.conf"));
+            properties = new Properties();
+            properties.load(in);
+            AllUtil.properties2Object(properties, brokerConfig);
+        }
 
         final MQCoreController mqCoreController = new MQCoreController(brokerConfig);
 

@@ -1,6 +1,6 @@
 package com.ispengya.mq.constant;
 
-public class ResponseCode extends RemotingSysResponseCode {
+public class ResponseCode {
 
     public static final int FLUSH_DISK_TIMEOUT = 10;
 

@@ -7,6 +7,7 @@ import com.ispengya.server.netty.server.SimpleServer;
 import com.ispengya.space.processor.BrokerHousekeepingService;
 import com.ispengya.space.processor.DefaultRequestProcessor;
 import com.ispengya.space.processor.RouteInfoManager;
+import com.ispengya.space.processor.SpaceConfig;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,9 +23,11 @@ public class SpaceController {
     private ExecutorService spaceProcessorExecutor;
     private final RouteInfoManager routeInfoManager;
     private BrokerHousekeepingService  brokerHousekeepingService;
+    private final SpaceConfig spaceConfig;
 
-    public SpaceController(ServerConfig serverConfig) {
+    public SpaceController(ServerConfig serverConfig, SpaceConfig spaceConfig) {
         this.serverConfig = serverConfig;
+        this.spaceConfig = spaceConfig;
         this.routeInfoManager = new RouteInfoManager();
     }
 

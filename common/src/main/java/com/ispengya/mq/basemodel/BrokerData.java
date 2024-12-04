@@ -1,4 +1,4 @@
-package com.ispengya.mq.core;
+package com.ispengya.mq.basemodel;
 
 import java.util.HashMap;
 import java.util.Random;
