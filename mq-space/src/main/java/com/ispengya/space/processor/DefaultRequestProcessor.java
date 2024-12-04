@@ -6,6 +6,7 @@ import com.ispengya.mq.constant.ResponseCode;
 import com.ispengya.mq.core.DataVersion;
 import com.ispengya.mq.header.req.QueryDataVersionRequestHeader;
 import com.ispengya.mq.header.req.RegisterBrokerRequestHeader;
+import com.ispengya.mq.header.req.UnRegisterBrokerRequestHeader;
 import com.ispengya.mq.header.resp.QueryDataVersionResponseHeader;
 import com.ispengya.mq.util.MQSerializer;
 import com.ispengya.server.SimpleServerProcessor;
@@ -42,13 +43,33 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
         }
         switch (request.getProcessCode()) {
             case RequestCode.REGISTER_BROKER:
-                return this.registerBroker(chc, request);
+                return registerBroker(chc, request);
             case RequestCode.QUERY_DATA_VERSION:
                 return getDataVersion(request);
+            case RequestCode.UNREGISTER_BROKER:
+                return unregisterBroker(chc, request);
             default:
                 break;
         }
         return null;
+    }
+
+
+
+    private SimpleServerTransContext unregisterBroker(ChannelHandlerContext ctx,
+                                                      SimpleServerTransContext request) throws SimpleServerException {
+        final SimpleServerTransContext response = SimpleServerTransContext.createResponseSST(null);
+        final UnRegisterBrokerRequestHeader requestHeader =
+                (UnRegisterBrokerRequestHeader) request.decodeCustomHeaderOfSST(UnRegisterBrokerRequestHeader.class);
+
+        this.spaceController.getRouteInfoManager().unregisterBroker(
+                requestHeader.getBrokerAddr(),
+                requestHeader.getBrokerName(),
+                requestHeader.getBrokerId());
+
+        response.setStatusCode(ResponseCode.SUCCESS);
+        response.setRemark(null);
+        return response;
     }
 
     private SimpleServerTransContext getDataVersion(SimpleServerTransContext request) throws SimpleServerException {

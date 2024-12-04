@@ -137,7 +137,68 @@ public class RouteInfoManager {
         }
     }
 
+    public void unregisterBroker(String brokerAddr, String brokerName, Long brokerId) {
+        try {
+            try {
+                this.lock.writeLock().lockInterruptibly();
+                BrokerLiveInfo brokerLiveInfo = this.brokerLiveTable.remove(brokerAddr);
+                log.info("unregisterBroker, remove from brokerLiveTable {}, {}",
+                        brokerLiveInfo != null ? "OK" : "Failed",
+                        brokerAddr
+                );
 
+                boolean removeBrokerName = false;
+                BrokerData brokerData = this.brokerAddrTable.get(brokerName);
+                if (null != brokerData) {
+                    String addr = brokerData.getBrokerAddrs().remove(brokerId);
+                    log.info("unregisterBroker, remove addr from brokerAddrTable {}, {}",
+                            addr != null ? "OK" : "Failed",
+                            brokerAddr
+                    );
+
+                    if (brokerData.getBrokerAddrs().isEmpty()) {
+                        this.brokerAddrTable.remove(brokerName);
+                        log.info("unregisterBroker, remove name from brokerAddrTable OK, {}",
+                                brokerName
+                        );
+
+                        removeBrokerName = true;
+                    }
+                }
+
+                if (removeBrokerName) {
+                    this.removeTopicByBrokerName(brokerName);
+                }
+            } finally {
+                this.lock.writeLock().unlock();
+            }
+        } catch (Exception e) {
+            log.error("unregisterBroker Exception", e);
+        }
+    }
+
+    private void removeTopicByBrokerName(final String brokerName) {
+        Iterator<Map.Entry<String, List<QueueData>>> itMap = this.topicQueueTable.entrySet().iterator();
+        while (itMap.hasNext()) {
+            Map.Entry<String, List<QueueData>> entry = itMap.next();
+
+            String topic = entry.getKey();
+            List<QueueData> queueDataList = entry.getValue();
+            Iterator<QueueData> it = queueDataList.iterator();
+            while (it.hasNext()) {
+                QueueData qd = it.next();
+                if (qd.getBrokerName().equals(brokerName)) {
+                    log.info("removeTopicByBrokerName, remove one broker's topic {} {}", topic, qd);
+                    it.remove();
+                }
+            }
+
+            if (queueDataList.isEmpty()) {
+                log.info("removeTopicByBrokerName, remove the topic all queue {}", topic);
+                itMap.remove();
+            }
+        }
+    }
 }
 
 class BrokerLiveInfo {
