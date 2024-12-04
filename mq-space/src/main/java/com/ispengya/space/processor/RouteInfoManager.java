@@ -2,6 +2,7 @@ package com.ispengya.space.processor;
 
 import com.ispengya.mq.QueueData;
 import com.ispengya.mq.body.TopicConfigBody;
+import com.ispengya.mq.body.TopicRouteData;
 import com.ispengya.mq.core.BrokerData;
 import com.ispengya.mq.core.DataVersion;
 import com.ispengya.mq.core.TopicConfig;
@@ -198,6 +199,54 @@ public class RouteInfoManager {
                 itMap.remove();
             }
         }
+    }
+
+    public TopicRouteData pickupTopicRouteData(String topic) {
+        TopicRouteData topicRouteData = new TopicRouteData();
+        boolean foundQueueData = false;
+        boolean foundBrokerData = false;
+        Set<String> brokerNameSet = new HashSet<String>();
+        List<BrokerData> brokerDataList = new LinkedList<BrokerData>();
+        topicRouteData.setBrokerDatas(brokerDataList);
+
+        try {
+            try {
+                this.lock.readLock().lockInterruptibly();
+                List<QueueData> queueDataList = this.topicQueueTable.get(topic);
+                if (queueDataList != null) {
+                    topicRouteData.setQueueDatas(queueDataList);
+                    foundQueueData = true;
+
+                    Iterator<QueueData> it = queueDataList.iterator();
+                    while (it.hasNext()) {
+                        QueueData qd = it.next();
+                        brokerNameSet.add(qd.getBrokerName());
+                    }
+
+                    for (String brokerName : brokerNameSet) {
+                        BrokerData brokerData = this.brokerAddrTable.get(brokerName);
+                        if (null != brokerData) {
+                            BrokerData brokerDataClone = new BrokerData(brokerData.getBrokerName(), (HashMap<Long, String>) brokerData
+                                    .getBrokerAddrs().clone());
+                            brokerDataList.add(brokerDataClone);
+                            foundBrokerData = true;
+                        }
+                    }
+                }
+            } finally {
+                this.lock.readLock().unlock();
+            }
+        } catch (Exception e) {
+            log.error("pickupTopicRouteData Exception", e);
+        }
+
+        log.debug("pickupTopicRouteData {} {}", topic, topicRouteData);
+
+        if (foundBrokerData && foundQueueData) {
+            return topicRouteData;
+        }
+
+        return null;
     }
 }
 

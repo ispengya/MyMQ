@@ -1,9 +1,11 @@
 package com.ispengya.space.processor;
 
 import com.ispengya.mq.body.TopicConfigBody;
+import com.ispengya.mq.body.TopicRouteData;
 import com.ispengya.mq.constant.RequestCode;
 import com.ispengya.mq.constant.ResponseCode;
 import com.ispengya.mq.core.DataVersion;
+import com.ispengya.mq.header.req.GetRouteInfoRequestHeader;
 import com.ispengya.mq.header.req.QueryDataVersionRequestHeader;
 import com.ispengya.mq.header.req.RegisterBrokerRequestHeader;
 import com.ispengya.mq.header.req.UnRegisterBrokerRequestHeader;
@@ -48,18 +50,36 @@ public class DefaultRequestProcessor implements SimpleServerProcessor {
                 return getDataVersion(request);
             case RequestCode.UNREGISTER_BROKER:
                 return unregisterBroker(chc, request);
+            case RequestCode.GET_ROUTEINTO_BY_TOPIC:
+                return getRouteInfoByTopic(chc, request);
             default:
                 break;
         }
         return null;
     }
 
+    private SimpleServerTransContext getRouteInfoByTopic(ChannelHandlerContext chc, SimpleServerTransContext request) throws SimpleServerException {
+        SimpleServerTransContext response = SimpleServerTransContext.createResponseSST(null);
+        GetRouteInfoRequestHeader requestHeader = (GetRouteInfoRequestHeader) request.decodeCustomHeaderOfSST(GetRouteInfoRequestHeader.class);
+        TopicRouteData topicRouteData = this.spaceController.getRouteInfoManager().pickupTopicRouteData(requestHeader.getTopic());
+
+        if (topicRouteData != null) {
+            byte[] content = MQSerializer.encode(topicRouteData);
+            response.setBody(content);
+            response.setStatusCode(ResponseCode.SUCCESS);
+            response.setRemark(null);
+            return response;
+        }
+        response.setStatusCode(ResponseCode.TOPIC_NOT_EXIST);
+        response.setRemark("No topic route info in name server for the topic: " + requestHeader.getTopic());
+        return response;
+    }
 
 
     private SimpleServerTransContext unregisterBroker(ChannelHandlerContext ctx,
                                                       SimpleServerTransContext request) throws SimpleServerException {
-        final SimpleServerTransContext response = SimpleServerTransContext.createResponseSST(null);
-        final UnRegisterBrokerRequestHeader requestHeader =
+        SimpleServerTransContext response = SimpleServerTransContext.createResponseSST(null);
+        UnRegisterBrokerRequestHeader requestHeader =
                 (UnRegisterBrokerRequestHeader) request.decodeCustomHeaderOfSST(UnRegisterBrokerRequestHeader.class);
 
         this.spaceController.getRouteInfoManager().unregisterBroker(
